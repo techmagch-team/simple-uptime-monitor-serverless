@@ -1,0 +1,38 @@
+service: uptime-monitor
+
+provider:
+  name: aws
+  runtime: python3.7
+  timeout: 5 # optional, in seconds, default is 6
+  apiKeys:
+    - uptime-monitor-api-key # The API Key name used for AWS keys generation
+
+  stage: dev
+  region: us-east-1
+
+custom:
+  # Automatically bundle dependencies from requirements.txt
+  # Dockerize the build only on non-linux environments
+  # pythonRequirements:
+  #   dockerizePip: non-linux
+
+package:
+  exclude:
+    - env/**
+    - .vscode/**
+
+functions:
+  uptime-monitor:
+    handler: uptime-monitor.check
+    events:
+      - http:
+          path: check 
+          method: get
+          request:  # Tell to API Gateway how the request should looks like. In this case only request with website querystring will be valid.
+            parameters:
+              querystrings:
+                website: true # E.g: https://www.apple.com or https://apple.com
+        private: true # Make the endpoint secure by forcing the use of uptime-monitor-api-key in X-Api-Key HTTP header.
+
+plugins:
+  - serverless-python-requirements
